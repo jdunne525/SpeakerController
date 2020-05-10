@@ -1,3 +1,5 @@
+#include <ArduinoOTA.h>
+
 #include <timer.h>      //global:  Ticker systick;  setup:  systick.attach(1, Systick1S);  callback: Systick1S.    (No loop handler needed)
 
 /*
@@ -23,6 +25,7 @@ const int ledPin = LED_BUILTIN;
 
 
 Ticker systick;
+bool OTAInProcess;
 
 // prototypes
 boolean connectWifi();
@@ -60,6 +63,7 @@ void setup()
     speakersdevice = new EspalexaDevice("Speakers", SpeakersChanged); //you can also create the Device objects yourself like here
     espalexa.addDevice(speakersdevice); //and then add them
     speakersdevice->setValue(0);      //255 is on.
+    TurnSpeakersOff();
     espalexa.begin();
     
   } else
@@ -70,6 +74,8 @@ void setup()
     }
   }
 
+  OTASetup();
+  
   //systick.attach(0.1, Systick100mS);
   systick.attach(1, Systick1S);         //ticker.h
 
@@ -106,7 +112,8 @@ void  Systick1S() {
 void loop()
 {
    espalexa.loop();
-   delay(1);
+   ArduinoOTA.handle();     //check for an ota update
+   while (OTAInProcess) ArduinoOTA.handle();    //if an ota starts, block everything but the ota
 }
 
 //Alexa callback function:
@@ -164,4 +171,37 @@ boolean connectWifi(){
     Serial.println("Connection failed.");
   }
   return state;
+}
+
+
+void  OTASetup()
+{
+  ArduinoOTA.onStart([]() {
+    String type;
+    if (ArduinoOTA.getCommand() == U_FLASH)
+      type = "sketch";
+    else // U_SPIFFS
+      type = "filesystem";
+
+    // NOTE: if updating SPIFFS this would be the place to unmount SPIFFS using SPIFFS.end()
+    Serial.println("Start updating " + type);
+    OTAInProcess = true;      //this will remain true until after the update completes and we restart
+  });
+  ArduinoOTA.onEnd([]() {
+    Serial.println("\nEnd");
+  });
+  ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
+    Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
+  });
+  ArduinoOTA.onError([](ota_error_t error) {
+    Serial.printf("Error[%u]: ", error);
+    if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
+    else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
+    else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
+    else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
+    else if (error == OTA_END_ERROR) Serial.println("End Failed");
+  });
+
+  Serial.println("ArduinoOTA Configured");
+  ArduinoOTA.begin();
 }
