@@ -94,9 +94,9 @@ void  Systick1S() {
     }
   }
 
-  //toggle the LED:
-  if (digitalRead(ledPin)) digitalWrite(ledPin, LOW);
-  else digitalWrite(ledPin, HIGH);
+//  //toggle the LED to show 1 second tick rate:
+//  if (digitalRead(ledPin)) digitalWrite(ledPin, LOW);
+//  else digitalWrite(ledPin, HIGH);
   
 }
 
