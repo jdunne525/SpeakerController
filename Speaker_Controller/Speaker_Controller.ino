@@ -16,6 +16,7 @@
 //#define MY_WIFI_PASS  "My Wifi Password"
 
 #define   SPEAKER_MAX_ON_TIME     (8*60*60)   //8 hours in seconds
+//#define   SPEAKER_MAX_ON_TIME     (15)   //15 seconds for testing
 
 const int speakerPin = 15; 
 const int ledPin = LED_BUILTIN;
@@ -48,6 +49,7 @@ void setup()
 
   // initialize digital pin LED_BUILTIN as an output.
   pinMode(ledPin, OUTPUT);
+  pinMode(speakerPin, OUTPUT);
 
   // Initialise wifi connection
   wifiConnected = connectWifi();
@@ -57,7 +59,7 @@ void setup()
     // Define your devices here. 
     speakersdevice = new EspalexaDevice("Speakers", SpeakersChanged); //you can also create the Device objects yourself like here
     espalexa.addDevice(speakersdevice); //and then add them
-    speakersdevice->setValue(255);      //255 is on.
+    speakersdevice->setValue(0);      //255 is on.
     espalexa.begin();
     
   } else
@@ -91,6 +93,7 @@ void  Systick1S() {
     if (SpeakersOnDuration >= SPEAKER_MAX_ON_TIME) {
       SpeakersOnDuration = 0;
       TurnSpeakersOff();
+      speakersdevice->setValue(0);      //update alexa to reflect the new value
     }
   }
 
